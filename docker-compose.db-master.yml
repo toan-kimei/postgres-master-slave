@@ -1,0 +1,117 @@
+version: "3.8"
+
+services:
+  postgresql-master:
+    image: bitnami/postgresql:15.3.0
+    restart: always
+    ports:
+      - '${POSTGRESQL_MASTER_PORT:-5432}:5432'
+    volumes:
+      - ./postgresql_master_data:/bitnami/postgresql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    env_file:
+      - ./env/postgresql.env
+    environment:
+      - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
+      - POSTGRESQL_REPLICATION_MODE=master
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
+
+  postgresql-slave-1:
+    image: bitnami/postgresql:15.3.0
+    ports:
+      - '${POSTGRESQL_SLAVE_1_PORT:-5433}:5432'
+    env_file:
+      - ./env/postgresql.env
+      - ./env/postgresql-slave.env
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - postgresql-master
+    restart: always
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
+
+  postgresql-slave-2:
+    image: bitnami/postgresql:15.3.0
+    ports:
+      - '${POSTGRESQL_SLAVE_2_PORT:-5434}:5432'
+    env_file:
+      - ./env/postgresql.env
+      - ./env/postgresql-slave.env
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - postgresql-master
+    restart: always
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
+
+  pgbouncer:
+    image: bitnami/pgbouncer:1.18.0
+    ports:
+      - "${PGBOUNCER_PORT:-6432}:6432"
+    env_file:
+      - ./env/pgbouncer.env
+    depends_on:
+      - postgresql-master
+      - postgresql-slave-1
+      - postgresql-slave-2
+    restart: always
+    volumes:
+      - ./config/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./config/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
+
+  haproxy:
+    image: haproxy:2.6
+    ports:
+      - "${HAPROXY_PORT:-5000}:5000"
+      - "${HAPROXY_STATS_PORT:-7000}:7000"
+    volumes:
+      - ./config/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./certs:/etc/ssl/certs:ro
+      - ./run/haproxy:/run/haproxy
+    depends_on:
+      - postgresql-master
+      - postgresql-slave-1
+      - postgresql-slave-2
+      - pgbouncer
+    command: /bin/sh -c "haproxy -f /usr/local/etc/haproxy/haproxy.cfg"
+    restart: always
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
+
+volumes:
+  postgresql_master_data:
