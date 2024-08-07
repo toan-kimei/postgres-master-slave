@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  postgresql-slave-1:
+    image: bitnami/postgresql:15.3.0
+    ports:
+      - '${POSTGRESQL_SLAVE_1_PORT:-5433}:5432'
+    env_file:
+      - ./env/postgresql.env
+      - ./env/postgresql-slave.env
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - postgresql-master
+    restart: always
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
+
+  postgresql-slave-2:
+    image: bitnami/postgresql:15.3.0
+    ports:
+      - '${POSTGRESQL_SLAVE_2_PORT:-5434}:5432'
+    env_file:
+      - ./env/postgresql.env
+      - ./env/postgresql-slave.env
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      - postgresql-master
+    restart: always
+    logging:
+        driver: "json-file"
+        options:
+            max-size: "100m"
+            max-file: "3"
