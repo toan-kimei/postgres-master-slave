@@ -9,11 +9,27 @@ services:
     volumes:
       - ./postgresql_master_data:/bitnami/postgresql
       - ./init-scripts:/docker-entrypoint-initdb.d
-    env_file:
-      - ./env/postgresql.env
+    # env_file:
+    #   - ./env/postgresql.env
     environment:
       - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
       - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_DATABASE=production_database
+      - ALLOW_EMPTY_PASSWORD=no
+
+      - POSTGRESQL_MAX_CONNECTIONS=500
+      - POSTGRESQL_SHARED_BUFFERS=256MB
+      - POSTGRESQL_EFFECTIVE_CACHE_SIZE=768MB
+      - POSTGRESQL_WORK_MEM=64MB
+      - POSTGRESQL_MAINTENANCE_WORK_MEM=128MB
+
+      - POSTGRESQL_REPLICATION_USER=replicasuser
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
@@ -31,11 +47,29 @@ services:
     image: bitnami/postgresql:15.3.0
     ports:
       - '${POSTGRESQL_SLAVE_1_PORT:-5433}:5432'
-    env_file:
-      - ./env/postgresql.env
-      - ./env/postgresql-slave.env
+    # env_file:
+    #   - ./env/postgresql.env
+    #   - ./env/postgresql-slave.env
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=postgresql-master
+      - POSTGRESQL_PGAUDIT_LOG=READ
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_DATABASE=production_database
+      - ALLOW_EMPTY_PASSWORD=no
+
+      - POSTGRESQL_MAX_CONNECTIONS=500
+      - POSTGRESQL_SHARED_BUFFERS=256MB
+      - POSTGRESQL_EFFECTIVE_CACHE_SIZE=768MB
+      - POSTGRESQL_WORK_MEM=64MB
+      - POSTGRESQL_MAINTENANCE_WORK_MEM=128MB
+
+      - POSTGRESQL_REPLICATION_USER=replicasuser
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
@@ -56,11 +90,29 @@ services:
     image: bitnami/postgresql:15.3.0
     ports:
       - '${POSTGRESQL_SLAVE_2_PORT:-5434}:5432'
-    env_file:
-      - ./env/postgresql.env
-      - ./env/postgresql-slave.env
+    # env_file:
+    #   - ./env/postgresql.env
+    #   - ./env/postgresql-slave.env
     environment:
       - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_MASTER_HOST=postgresql-master
+      - POSTGRESQL_PGAUDIT_LOG=READ
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - POSTGRESQL_LOG_HOSTNAME=true
+      - POSTGRESQL_DATABASE=production_database
+      - ALLOW_EMPTY_PASSWORD=no
+
+      - POSTGRESQL_MAX_CONNECTIONS=500
+      - POSTGRESQL_SHARED_BUFFERS=256MB
+      - POSTGRESQL_EFFECTIVE_CACHE_SIZE=768MB
+      - POSTGRESQL_WORK_MEM=64MB
+      - POSTGRESQL_MAINTENANCE_WORK_MEM=128MB
+
+      - POSTGRESQL_REPLICATION_USER=replicasuser
+      - POSTGRESQL_REPLICATION_PASSWORD=password123
+
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
